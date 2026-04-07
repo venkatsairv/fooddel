@@ -37,4 +37,38 @@ public class EmailService {
             logger.warn("Order placed but email could not be sent: {}", ex.getMessage());
         }
     }
+
+    public void sendOwnerOrderPlacedEmail(String to, Order order, String restaurantName) {
+        sendSimpleEmail(
+                to,
+                "New Order Received",
+                "A new order #" + order.getId() + " was placed for " + restaurantName + "."
+        );
+    }
+
+    public void sendOwnerOrderCancelledEmail(String to, Order order, String restaurantName) {
+        sendSimpleEmail(
+                to,
+                "Order Cancelled",
+                "Order #" + order.getId() + " was cancelled for " + restaurantName + "."
+        );
+    }
+
+    private void sendSimpleEmail(String to, String subject, String body) {
+        if (mailSender == null) {
+            logger.info("Mail sender is not configured. Skipping email for {}", to);
+            return;
+        }
+
+        try {
+            SimpleMailMessage message = new SimpleMailMessage();
+            message.setTo(to);
+            message.setSubject(subject);
+            message.setText(body);
+            mailSender.send(message);
+            logger.info("Email sent to {}", to);
+        } catch (MailException ex) {
+            logger.warn("Email could not be sent: {}", ex.getMessage());
+        }
+    }
 }

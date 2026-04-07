@@ -7,4 +7,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface MenuRepository extends JpaRepository<MenuItem, Long> {
 
     List<MenuItem> findByRestaurantIdOrderByNameAsc(Long restaurantId);
+
+    List<MenuItem> findByRestaurantIdAndAvailableTrueOrderByNameAsc(Long restaurantId);
 }

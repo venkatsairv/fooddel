@@ -28,6 +28,8 @@ public class RestaurantService {
                         "GET /locations",
                         "POST /auth/register",
                         "POST /auth/login",
+                        "POST /owner/register",
+                        "POST /owner/login",
                         "GET /restaurants",
                         "GET /restaurants?location={location}",
                         "GET /menu/{restaurantId}"
@@ -35,10 +37,17 @@ public class RestaurantService {
                 "protectedApis", List.of(
                         "GET /cart",
                         "POST /cart/add",
+                        "PATCH /cart/quantity/{id}",
+                        "PATCH /cart/decrease/{id}",
                         "DELETE /cart/remove/{id}",
                         "POST /order/place",
                         "POST /order/cancel/{id}",
-                        "GET /orders"
+                        "GET /orders",
+                        "GET /owner/menu",
+                        "POST /owner/menu",
+                        "PUT /owner/menu/{id}",
+                        "PATCH /owner/menu/{id}/availability?available=false",
+                        "DELETE /owner/menu/{id}"
                 )
         );
     }

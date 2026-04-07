@@ -32,6 +32,9 @@ public class CartService {
         User user = getUserByEmail(email);
         MenuItem menuItem = menuRepository.findById(menuItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Menu item not found"));
+        if (Boolean.FALSE.equals(menuItem.getAvailable())) {
+            throw new IllegalStateException("This menu item is currently unavailable");
+        }
 
         CartItem cartItem = cartRepository.findByUserIdAndMenuItemId(user.getId(), menuItemId)
                 .orElseGet(CartItem::new);
@@ -49,17 +52,48 @@ public class CartService {
     }
 
     @Transactional
+    public CartItem updateCartQuantity(String email, Long cartItemId, Integer quantity) {
+        if (quantity == null || quantity <= 0) {
+            throw new IllegalArgumentException("Quantity must be greater than 0");
+        }
+
+        CartItem cartItem = getOwnedCartItem(email, cartItemId);
+        cartItem.setQuantity(quantity);
+        return cartRepository.save(cartItem);
+    }
+
+    @Transactional
+    public String decreaseCartItem(String email, Long cartItemId) {
+        CartItem cartItem = getOwnedCartItem(email, cartItemId);
+        Integer currentQuantity = cartItem.getQuantity() == null ? 0 : cartItem.getQuantity();
+
+        if (currentQuantity <= 1) {
+            cartRepository.delete(cartItem);
+            return "Cart item removed successfully";
+        }
+
+        cartItem.setQuantity(currentQuantity - 1);
+        cartRepository.save(cartItem);
+        return "Cart item quantity decreased successfully";
+    }
+
+    @Transactional
     public String removeFromCart(String email, Long cartItemId) {
+        CartItem cartItem = getOwnedCartItem(email, cartItemId);
+        cartRepository.delete(cartItem);
+        return "Cart item removed successfully";
+    }
+
+    private CartItem getOwnedCartItem(String email, Long cartItemId) {
         User user = getUserByEmail(email);
         CartItem cartItem = cartRepository.findById(cartItemId)
                 .orElseThrow(() -> new IllegalArgumentException("Cart item not found"));
 
         if (!cartItem.getUser().getId().equals(user.getId())) {
-            throw new IllegalArgumentException("You can remove only your own cart items");
+            throw new IllegalArgumentException("You can update only your own cart items");
         }
 
-        cartRepository.delete(cartItem);
-        return "Cart item removed successfully";
+        return cartItem;
     }
 
     private User getUserByEmail(String email) {

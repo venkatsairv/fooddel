@@ -1,6 +1,8 @@
 package eathappy.com.fooddel.service;
 
+import eathappy.com.fooddel.entity.RestaurantOwner;
 import eathappy.com.fooddel.entity.User;
+import eathappy.com.fooddel.repository.RestaurantOwnerRepository;
 import eathappy.com.fooddel.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,10 +19,16 @@ public class AuthService implements UserDetailsService {
     private static final Logger logger = LoggerFactory.getLogger(AuthService.class);
 
     private final UserRepository userRepository;
+    private final RestaurantOwnerRepository restaurantOwnerRepository;
     private final PasswordEncoder passwordEncoder;
 
-    public AuthService(UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public AuthService(
+            UserRepository userRepository,
+            RestaurantOwnerRepository restaurantOwnerRepository,
+            PasswordEncoder passwordEncoder
+    ) {
         this.userRepository = userRepository;
+        this.restaurantOwnerRepository = restaurantOwnerRepository;
         this.passwordEncoder = passwordEncoder;
     }
 
@@ -66,13 +74,24 @@ public class AuthService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        User user = userRepository.findByEmail(username.trim().toLowerCase())
+        String normalizedEmail = username.trim().toLowerCase();
+
+        User user = userRepository.findByEmail(normalizedEmail).orElse(null);
+        if (user != null) {
+            return org.springframework.security.core.userdetails.User
+                    .withUsername(user.getEmail())
+                    .password(user.getPassword())
+                    .roles("USER")
+                    .build();
+        }
+
+        RestaurantOwner owner = restaurantOwnerRepository.findByEmail(normalizedEmail)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found"));
 
         return org.springframework.security.core.userdetails.User
-                .withUsername(user.getEmail())
-                .password(user.getPassword())
-                .roles("USER")
+                .withUsername(owner.getEmail())
+                .password(owner.getPassword())
+                .roles("OWNER")
                 .build();
     }
 }
